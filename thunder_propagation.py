@@ -13,19 +13,39 @@ def run():
     atm_height_list = build_atm_height_list(std_atm)
     start_i = get_start_idx(t_base, atm_height_list)
     graph_list = []
-    for andx in range(0, 40):
-        s_angle = 2 * andx
+
+    for andx in range(0, 22):
+        s_angle = 4 * andx
         angle = s_angle
         curr_y = t_base
         curr_x = 0
         indx = start_i
         x_list = []
         y_list = []
-        while indx > 0 and angle < 90:
-            next_i = indx - 1
-            next_y = atm_height_list[next_i]
+        x_list.append(0.0)
+        y_list.append(4000.0)
+        jndx = 0
+        while jndx < 20 and curr_y >0 and \
+                not (curr_y >= 4000 and jndx > 0):
+            jndx = jndx +1
+            if angle < 90:
+                next_i = indx - 1
+            elif angle > 90:
+                next_i = indx + 1
+            else:
+                next_i = indx
+            print(curr_x, curr_y, angle)
+            try:
+                next_y = atm_height_list[next_i]
+            except:
+                if next_i == 0:
+                    jndx = 20
+                    next_y = 4000
+                else:
+                    jndx = 20
+                    next_y = 0
             next_x = get_next_x(curr_x, curr_y, angle, next_y)
-
+            print(curr_x, curr_y, next_x, next_y, angle)
             x_list.append(next_x)
             y_list.append(next_y)
             next_angle = get_next_angle(angle, indx, atm_w_density)
@@ -37,10 +57,13 @@ def run():
             # end loop for angle
         graph_item = [s_angle, x_list, y_list]
         matplotlib.pyplot.plot(x_list, y_list, s_angle)
-        matplotlib.pyplot.show()
+        #matplotlib.pyplot.show()
         graph_list.append(graph_item)
+    print('hello')
     print_graph_list(graph_list)
-
+    print('hello', flush=True)
+    print(matplotlib.backends.backend)
+    matplotlib.pyplot.xlim(right = 25000)
     matplotlib.pyplot.show()
 
 
@@ -107,18 +130,29 @@ def get_speed_sound(pressure, density):
 def get_refraction(dangle1, v1, v2):
     rangle1 = math.radians(dangle1)
     expr = math.sin(rangle1) * v2 / v1
-    if expr > 1:
+    if expr == 1:
         dangle2 = 90
+    elif expr > 1:
+        expr = 2 - expr
+        rangle2 = math.asin(expr)
+        dangle2 = math.degrees(rangle2)
+        dangle2 = 180 - dangle2
     else:
+        print(expr)
         rangle2 = math.asin(expr)
         dangle2 = math.degrees(rangle2)
     return dangle2
 
 
 def print_graph_list(graph_list):
+    print(graph_list)
     len_iter = len(graph_list[0][1])
     for indx in range(len_iter):
-        print(str(graph_list[indx][0]) + ',', end='', flush=True)
+        print(indx, end='', flush=True)
+        try:
+            print(str(graph_list[indx][0]) + ',', end='', flush=True)
+        except IndexError:
+            print(str(indx) + ';' + str(graph_list), end='', flush=True)
         for andx in range(len(graph_list)):
             try:
                 print(str(graph_list[andx][indx]) + ',', end='', flush=True)
