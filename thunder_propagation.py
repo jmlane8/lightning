@@ -5,8 +5,8 @@ import matplotlib.pyplot
 
 
 def run():
-    std_atm = [(0, 101325, 15), (1000, 89880, 8.50), (2000, 79500, 2.00), (3000, 70012, -4.49), (4000, 61660, -10.98)]  # list of tuples: (height, pressure, temperature)
-    atm_w_density = []  # (height, pressure, temperature, density, sp_sound)
+    std_atm = [(0, 101325, 15, 17.1), (1000, 89880, 8.50, 11.1), (2000, 79500, 2.00, 7.1), (3000, 70012, -4.49, 0), (4000, 61660, -10.98, 0)]  # list of tuples: (height, pressure, temperature)
+    atm_w_density = []  # (height, pressure, temperature, sat_vp, dry_density, humid_density, sp_sound)
     atm_height_list = []  # height
     t_base = 4000   # (base  of cumulonimbus, assumed to be source of lightning, 200 m to 4000 m)
     atm_w_density = build_atm_w_density(std_atm)
@@ -48,7 +48,7 @@ def run():
             print(curr_x, curr_y, next_x, next_y, angle)
             x_list.append(next_x)
             y_list.append(next_y)
-            next_angle = get_next_angle(angle, indx, atm_w_density)
+            next_angle = get_next_angle(angle, indx, atm_w_density, False, next_i)
             curr_x = next_x
             curr_y = next_y
             indx = next_i
@@ -79,16 +79,13 @@ def get_next_x(curr_x, curr_y, angle, next_y):
     return next_x
 
 
-def get_next_angle(angle, indx, atm_w_density):
-    next_i = indx - 1
-    tempC1 = atm_w_density[indx][2]
-    pressure1 = atm_w_density[indx][1]
-    density1 = get_density(pressure1, tempC1)
-    v1 = get_speed_sound(pressure1, density1)
-    tempC2 = atm_w_density[next_i][2]
-    pressure2 = atm_w_density[next_i][1]
-    density2 = get_density(pressure2, tempC2)
-    v2 = get_speed_sound(pressure2, density2)
+def get_next_angle(angle, indx, atm_w_density, is_dry, next_i):
+    if is_dry:
+        dens_ndx = 6
+    else:
+        dens_ndx = 7
+    v1 = atm_w_density[indx][dens_ndx]
+    v2 = atm_w_density[next_i][dens_ndx]
     next_angle = get_refraction(angle, v1, v2)
     return next_angle
 
@@ -99,9 +96,12 @@ def build_atm_w_density(in_atm):
         height = in_atm[indx][0]
         pressure = in_atm[indx][1]
         tempC = in_atm[indx][2]
-        density = get_density(pressure, tempC)
-        c_dry = get_speed_sound(pressure, density)
-        atm_item = (height, pressure, tempC, density, c_dry)
+        sat_vp = in_atm[indx][3]
+        dry_density = get_density(pressure, tempC, 0)
+        sat_density = get_density(pressure, tempC, sat_vp)
+        c_dry = get_speed_sound(pressure, dry_density)
+        c_sat = get_speed_sound(pressure, sat_density)
+        atm_item = (height, pressure, tempC, sat_vp, dry_density, sat_density, c_dry, c_sat)
         new_atm_list.append(atm_item)
     return new_atm_list
 
@@ -114,10 +114,21 @@ def build_atm_height_list(in_atm):
     return new_atm_list
 
 
-def get_density(pressure, temperature):  # assumes dry air
+def get_dry_density(pressure, temperature):  # assumes dry air
     tempK = temperature + 273.15
     Rconst = 287.05
     density = pressure / (Rconst * tempK)
+    return density
+
+
+def get_density(pressure, temperature, partial_wvp):
+    tempK = temperature + 273.15
+    Rconst = 287.05
+    Mdry = 0.0289654  #molar mass of dry air
+    Mwater = 0.018016 #molar mass of water vapor
+    p_dry = pressure - partial_wvp
+    numer = (p_dry * Mdry) + (partial_wvp * Mwater)
+    density = numer / (Rconst * tempK)
     return density
 
 
