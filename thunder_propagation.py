@@ -1,7 +1,8 @@
 from typing import List, Any, Union
 
 import math
-import matplotlib.pyplot
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 def run():
@@ -56,15 +57,19 @@ def run():
 
             # end loop for angle
         graph_item = [s_angle, x_list, y_list]
-        matplotlib.pyplot.plot(x_list, y_list, s_angle)
-        #matplotlib.pyplot.show()
+        plt.plot(x_list, y_list, s_angle)
+        #plt.show()
         graph_list.append(graph_item)
     print('hello')
     print_graph_list(graph_list)
     print('hello', flush=True)
     print(matplotlib.backends.backend)
-    matplotlib.pyplot.xlim(right = 25000)
-    matplotlib.pyplot.show()
+    plt.ylabel('Height (m)')
+    plt.xlabel('Horizontal Distance (m)')
+    plt.title('Propagation of Thunder in Standard Atmosphere')
+    plt.xlim(right = 25000)
+    plt.grid( linestyle = '--', linewidth = 0.5)
+    plt.show()
 
 
 def get_start_idx(height, std_atm_height_list):
