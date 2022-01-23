@@ -69,7 +69,8 @@ def run():
     plt.title('Propagation of Thunder in Standard Atmosphere')
     plt.xlim(right = 25000)
     plt.grid( linestyle = '--', linewidth = 0.5)
-    plt.show()
+    #plt.show()
+    plt.savefig('thunder_propagation.png')
 
 
 def get_start_idx(height, std_atm_height_list):
